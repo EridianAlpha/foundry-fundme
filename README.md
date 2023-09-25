@@ -1,4 +1,4 @@
-## FundMe Template Project - Foundry
+# FundMe Template Project - Foundry
 
 This project is a template showing how to get started with Foundry, testing, and deploying a simple smart contract.
 
@@ -11,7 +11,7 @@ Foundry consists of:
 
 ## Documentation
 
-https://book.getfoundry.sh/
+<https://book.getfoundry.sh>
 
 ## Usage
 
@@ -25,11 +25,16 @@ forge build
 
 ```shell
 forge test
+forge test -vvv
 ```
+
+### Test Coverage
 
 ```shell
 forge coverage
 ```
+
+[Coverage line highlighting in VSCode](https://mirror.xyz/devanon.eth/RrDvKPnlD-pmpuW7hQeR5wWdVjklrpOgPCOA-PJkWFU)
 
 ### Format
 
@@ -52,7 +57,7 @@ anvil
 ### Deploy
 
 ```shell
-forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+
 ```
 
 ### Cast

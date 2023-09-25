@@ -21,11 +21,11 @@ error FundMe__WithdrawSelfDestructFailed();
  */
 contract FundMe is Ownable, ReentrancyGuard {
     // State variables
-    address[] internal s_funders;
-    address internal immutable i_creator; // Set in constructor
-    mapping(address => uint256) internal s_addressToAmountFunded;
+    address[] private s_funders;
+    address private immutable i_creator; // Set in constructor
+    mapping(address => uint256) private s_addressToAmountFunded;
     uint256 public constant MINIMUM_ETH = 1 * 10 ** 15; // Constant, never changes (0.001 ETH)
-    uint256 internal s_balance; // Stores the funded balance to avoid selfdestruct attacks using address(this).balance
+    uint256 private s_balance; // Stores the funded balance to avoid selfdestruct attacks using address(this).balance
 
     /**
      *  The s_balance variable isn't needed for this contract
@@ -51,8 +51,9 @@ contract FundMe is Ownable, ReentrancyGuard {
      * - view / pure
      */
 
-    constructor() {
+    constructor(address owner) {
         i_creator = msg.sender;
+        transferOwnership(owner);
     }
 
     /**
@@ -80,7 +81,7 @@ contract FundMe is Ownable, ReentrancyGuard {
      *  @dev // TODO
      */
     function fund() public payable virtual {
-        if (msg.value <= MINIMUM_ETH) revert FundMe__NotEnoughEthSent();
+        if (msg.value < MINIMUM_ETH) revert FundMe__NotEnoughEthSent();
 
         s_balance += msg.value;
         s_addressToAmountFunded[msg.sender] += msg.value;
