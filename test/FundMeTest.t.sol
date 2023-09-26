@@ -7,7 +7,9 @@ import {DeployFundMe} from "../script/DeployFundMe.s.sol";
 import {TestHelper} from "../src/test/TestHelper.sol";
 import {SelfDestructAttack} from "../src/test/SelfDestructAttack.sol";
 import {SelfDestructHelper} from "../src/test/SelfDestructHelper.sol";
+import {ReentrancyAttack} from "../src/test/ReentrancyAttack.sol";
 
+error FundMe__RefundFailed();
 error FundMe__WithdrawSelfDestructFailed();
 
 // Base contract for common setup
@@ -328,15 +330,96 @@ contract FundMeWRefundTest is FundMeTestSetup {
         vm.expectRevert();
         testHelper.fundMeRefund();
     }
+
+    function test_RefundFunctionBlocksReentrancyAttack() public {
+        // Deploy the ReentrancyAttack contract
+        ReentrancyAttack reentrancyAttack = new ReentrancyAttack(
+            payable(address(fundMe))
+        );
+
+        // Fund the contract
+        // Deposit multiple accounts to confirm that isn't refunded in the attack
+        vm.prank(user1);
+        fundMe.fund{value: SEND_VALUE}();
+
+        // Refund from the contract
+        vm.expectRevert(FundMe__RefundFailed.selector);
+        reentrancyAttack.attack{value: SEND_VALUE}();
+    }
 }
 
 // Test all the getter functions
-contract FundMeTest is FundMeTestSetup {
+contract FundMeGettersTest is FundMeTestSetup {
+    function test_GetCreator() public {
+        // The deploy script for some reason doesn't use the expected
+        // msg.sender as the creator, so this test requires a separate
+        // contract to be deployed and tested against
+        // TODO: Understand why the deploy script doesn't use the expected
+        // msg.sender as the creator
+        FundMe fundMeCreatorTest = new FundMe(address(this));
+        assertEq(fundMeCreatorTest.getCreator(), address(this));
+    }
+
+    function test_GetOwner() public {
+        assertEq(fundMe.owner(), owner);
+    }
+
+    function test_GetFunderIndex() public {
+        vm.prank(user1);
+        fundMe.fund{value: SEND_VALUE}();
+        assertEq(fundMe.getFunderIndex(user1), 0);
+    }
+
+    function test_GetFunderAddress() public {
+        vm.prank(user1);
+        fundMe.fund{value: SEND_VALUE}();
+        assertEq(fundMe.getFunderAddress(0), user1);
+    }
+
+    function test_GetAddressToAmountFunded() public {
+        vm.prank(user1);
+        fundMe.fund{value: SEND_VALUE}();
+        assertEq(fundMe.getAddressToAmountFunded(user1), SEND_VALUE);
+    }
+
+    function test_GetBalance() public {
+        assertEq(fundMe.getBalance(), 0);
+    }
+
+    function test_GetFunders() public {
+        vm.prank(user1);
+        fundMe.fund{value: SEND_VALUE}();
+        vm.prank(user2);
+        fundMe.fund{value: SEND_VALUE}();
+        vm.prank(user3);
+        fundMe.fund{value: SEND_VALUE}();
+
+        address[] memory funders = fundMe.getFunders();
+        assertEq(funders.length, 3);
+        assertEq(funders[0], user1);
+        assertEq(funders[1], user2);
+        assertEq(funders[2], user3);
+    }
+}
+
+contract FundMeMiscTest is FundMeTestSetup {
     function test_MinimumEthAmount() public {
         assertEq(fundMe.MINIMUM_ETH(), 0.001 ether);
     }
 
     function test_IsMsgSender() public {
         assertEq(fundMe.getBalance(), 0);
+    }
+
+    function test_CoverageForReceiveFunction() public {
+        (bool success, ) = address(fundMe).call{value: SEND_VALUE}("");
+        require(success, "Call failed");
+        assertEq(fundMe.getBalance(), SEND_VALUE);
+    }
+
+    function test_CoverageForFallbackFunction() public {
+        (bool success, ) = address(fundMe).call{value: SEND_VALUE}("123");
+        require(success, "Call failed");
+        assertEq(fundMe.getBalance(), SEND_VALUE);
     }
 }
