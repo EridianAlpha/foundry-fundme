@@ -21,6 +21,8 @@ contract TestHelper {
         fundMeContract = FundMe(payable(fundMeContractAddress));
     }
 
+    function initialFunding() public payable {}
+
     function fundMeFund() public payable {
         fundMeContract.fund{value: msg.value}();
     }

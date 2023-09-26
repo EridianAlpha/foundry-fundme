@@ -249,6 +249,87 @@ contract FundMeWithdrawTest is FundMeTestSetup {
     }
 }
 
+// *************
+// REFUND TESTS
+// *************
+contract FundMeWRefundTest is FundMeTestSetup {
+    function test_RefundSucceeds() public {
+        // User1 - Funds with no refund
+        vm.prank(user1);
+        fundMe.fund{value: SEND_VALUE}();
+
+        // User2 - Funds once then refunds
+        vm.prank(user2);
+        fundMe.fund{value: SEND_VALUE}();
+
+        // User3 - Funds twice then refunds
+        vm.prank(user3);
+        fundMe.fund{value: SEND_VALUE}();
+        vm.prank(user3);
+        fundMe.fund{value: SEND_VALUE}();
+
+        // Refund user2
+        uint256 user2BalanceBefore = user2.balance;
+        vm.prank(user2);
+        fundMe.refund();
+        uint256 user2BalanceAfter = user2.balance;
+        uint256 user2BalanceDiff = user2BalanceAfter - user2BalanceBefore;
+        assertEq(user2BalanceDiff, SEND_VALUE);
+
+        // Refund user3
+        uint256 user3BalanceBefore = user3.balance;
+        vm.prank(user3);
+        fundMe.refund();
+        uint256 user3BalanceAfter = user3.balance;
+        uint256 user3BalanceDiff = user3BalanceAfter - user3BalanceBefore;
+        assertEq(user3BalanceDiff, 2 * SEND_VALUE);
+
+        // Check funder amount has been reset to 0
+        assertEq(fundMe.getAddressToAmountFunded(user2), 0);
+        assertEq(fundMe.getAddressToAmountFunded(user3), 0);
+
+        // Check funder has been removed from the s_funders index
+        vm.expectRevert();
+        fundMe.getFunderIndex(user2);
+        vm.expectRevert();
+        fundMe.getFunderIndex(user3);
+
+        // Check s_balance is correct (Only contains user1 funds)
+        assertEq(fundMe.getBalance(), SEND_VALUE);
+    }
+
+    function test_RefundZeroBalanceFails() public {
+        vm.expectRevert();
+        vm.prank(user1);
+        fundMe.refund();
+    }
+
+    function test_RefundCallFailureThrowsError() public {
+        // This covers the edge case where the .call fails
+        // because the receiving contract doesn't have a
+        // receive() or fallback() function
+
+        // Deploy the helper contract
+        TestHelper testHelper = new TestHelper(address(fundMe));
+
+        // Fund the helper contract
+        testHelper.initialFunding{value: SEND_VALUE}();
+
+        // Fund the contract
+        vm.prank(address(testHelper));
+        fundMe.fund{value: SEND_VALUE}();
+
+        // Change the owner of fundMe to the helper contract address
+        // so it can perform the refund
+        vm.prank(owner);
+        fundMe.transferOwnership(address(testHelper));
+
+        // Refund from the contract
+        vm.expectRevert();
+        testHelper.fundMeRefund();
+    }
+}
+
 // Test all the getter functions
 contract FundMeTest is FundMeTestSetup {
     function test_MinimumEthAmount() public {
