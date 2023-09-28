@@ -20,6 +20,7 @@ error FundMe__WithdrawSelfDestructFailed();
 // Base contract for common setup
 contract FundMeTestSetup is Test {
     FundMe fundMe;
+    uint256 constant GAS_PRICE = 1;
     uint256 constant SEND_VALUE = 1 ether;
     uint256 constant STARTING_BALANCE = 10 ether;
 
@@ -78,9 +79,8 @@ contract FundMeFundTest is FundMeTestSetup {
     }
 
     function test_NoDuplicateFundersInFundersArray() public {
-        vm.prank(user1);
+        vm.startPrank(user1);
         fundMe.fund{value: SEND_VALUE}();
-        vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
 
         address[] memory funders = fundMe.getFunders();
@@ -103,17 +103,25 @@ contract FundMeFundTest is FundMeTestSetup {
 // *****************
 contract FundMeWithdrawTest is FundMeTestSetup {
     function test_OwnerWithdrawOnce() public {
+        vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
-        vm.prank(owner);
+
+        vm.prank(fundMe.owner());
         fundMe.withdraw();
+
         assertEq(fundMe.getBalance(), 0);
     }
 
     function test_OwnerWithdrawMultiple() public {
+        vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
+
         vm.prank(owner);
         fundMe.withdraw();
+
+        vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
+
         vm.prank(owner);
         fundMe.withdraw();
         assertEq(fundMe.getBalance(), 0);
@@ -271,10 +279,10 @@ contract FundMeWRefundTest is FundMeTestSetup {
         fundMe.fund{value: SEND_VALUE}();
 
         // User3 - Funds twice then refunds
-        vm.prank(user3);
+        vm.startPrank(user3);
         fundMe.fund{value: SEND_VALUE}();
-        vm.prank(user3);
         fundMe.fund{value: SEND_VALUE}();
+        vm.stopPrank();
 
         // Refund user2
         uint256 user2BalanceBefore = user2.balance;
