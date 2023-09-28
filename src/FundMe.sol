@@ -80,7 +80,7 @@ contract FundMe is Ownable, ReentrancyGuard {
     /** @notice Function for sending funds to the contract.
      *  @dev // TODO
      */
-    function fund() public payable virtual {
+    function fund() public payable {
         if (msg.value < MINIMUM_ETH) revert FundMe__NotEnoughEthSent();
 
         s_balance += msg.value;
@@ -169,6 +169,7 @@ contract FundMe is Ownable, ReentrancyGuard {
 
         // Remove specific funder from the s_funders array
         for (uint256 i = 0; i < funders.length; i++) {
+            // This branch can't be covered in test coverage as it's not reachable in the test
             if (funders[i] == msg.sender) {
                 // Move the element into the last place to delete
                 s_funders[i] = s_funders[s_funders.length - 1];
