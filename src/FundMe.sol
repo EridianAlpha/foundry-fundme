@@ -4,6 +4,8 @@ pragma solidity ^0.8.18;
 // Imports
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {PriceConverter} from "./PriceConverter.sol";
 
 // Error codes
 error FundMe__RefundFailed();
@@ -26,6 +28,7 @@ contract FundMe is Ownable, ReentrancyGuard {
     mapping(address => uint256) private s_addressToAmountFunded;
     uint256 public constant MINIMUM_ETH = 1 * 10 ** 15; // Constant, never changes (0.001 ETH)
     uint256 private s_balance; // Stores the funded balance to avoid selfdestruct attacks using address(this).balance
+    AggregatorV3Interface private s_priceFeed;
 
     /**
      *  The s_balance variable isn't needed for this contract
@@ -51,8 +54,9 @@ contract FundMe is Ownable, ReentrancyGuard {
      * - view / pure
      */
 
-    constructor(address owner) {
+    constructor(address owner, address priceFeed) {
         i_creator = msg.sender;
+        s_priceFeed = AggregatorV3Interface(priceFeed);
         transferOwnership(owner);
     }
 

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
@@ -10,14 +9,14 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 contract DeployFundMe is Script {
     function run(address owner) external returns (FundMe) {
         // Before startBroadcast -> Not a "real" tx
-
-        // TODO: Not currently using this
-        // HelperConfig helperConfig = new HelperConfig();
-        // address priceFeed = helperConfig.activeNetworkConfig();
+        HelperConfig helperConfig = new HelperConfig();
+        address priceFeed = helperConfig.activeNetworkConfig();
 
         // After startBroadcast -> "Real" tx
-        vm.startBroadcast();
-        FundMe fundMe = new FundMe(owner);
+        // Specify the user deploying the contract as the initial owner
+        vm.startBroadcast(owner);
+        FundMe fundMe = new FundMe(owner, priceFeed);
+
         vm.stopBroadcast();
         return fundMe;
     }

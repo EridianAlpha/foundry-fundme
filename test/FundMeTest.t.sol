@@ -42,7 +42,7 @@ contract FundMeTestSetup is Test {
 
 contract FundMeConstructorTest is FundMeTestSetup {
     function test_Constructor() public {
-        assertEq(fundMe.getCreator(), msg.sender);
+        assertEq(fundMe.getCreator(), owner);
     }
 }
 
@@ -378,13 +378,7 @@ contract FundMeWRefundTest is FundMeTestSetup {
 // Test all the getter functions
 contract FundMeGettersTest is FundMeTestSetup {
     function test_GetCreator() public {
-        // The deploy script for some reason doesn't use the expected
-        // msg.sender as the creator, so this test requires a separate
-        // contract to be deployed and tested against
-        // TODO: Understand why the deploy script doesn't use the expected
-        // msg.sender as the creator
-        FundMe fundMeCreatorTest = new FundMe(address(this));
-        assertEq(fundMeCreatorTest.getCreator(), address(this));
+        assertEq(fundMe.getCreator(), owner);
     }
 
     function test_GetOwner() public {
