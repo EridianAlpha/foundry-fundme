@@ -50,34 +50,54 @@ contract FundMeConstructorTest is FundMeTestSetup {
 // FUNDING TESTS
 // **************
 contract FundMeFundTest is FundMeTestSetup {
+    /// Tests that the `fund` function reverts when no ETH is sent with the transaction.
+    /// Expects a revert with the `FundMe__NotEnoughEthSent` error selector.
     function test_FundFailsNoEthSent() public {
         vm.expectRevert(FundMe__NotEnoughEthSent.selector);
         fundMe.fund();
     }
 
+    /// @notice Tests that the `fund` function reverts when an amount less than the minimum
+    /// ETH required is sent. This ensures proper enforcement of minimum funding requirements.
+    /// @dev Calculates an amount of ETH that is 1 less than the minimum required,
+    /// then expects a revert with the `FundMe__NotEnoughEthSent` error selector.
     function test_FundFailsNotEnoughEthSent() public {
         uint256 MINIMUM_ETH_LESS = fundMe.MINIMUM_ETH() - 1;
         vm.expectRevert(FundMe__NotEnoughEthSent.selector);
         fundMe.fund{value: (MINIMUM_ETH_LESS)}();
     }
 
+    /// @notice Tests that the `fund` function successfully processes
+    /// a transaction when the minimum ETH requirement is met.
+    /// @dev Calls the `fund` function with exactly the minimum ETH
+    /// required and checks if the contract's balance is updated correctly.
     function test_FundSucceeds() public {
         fundMe.fund{value: fundMe.MINIMUM_ETH()}();
         assertEq(fundMe.getBalance(), fundMe.MINIMUM_ETH());
     }
 
+    /// @notice Tests that funding updates the amount funded
+    /// data structure correctly.
+    /// @dev Pranks a user to fund and then checks if the
+    /// mapping of the address to the amount funded is updated correctly.
     function test_UpdateAmountFundedDataStructure() public {
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
         assertEq(fundMe.getAddressToAmountFunded(user1), SEND_VALUE);
     }
 
+    /// @notice Tests that a funder is correctly added to the funders array.
+    /// @dev Pranks a user to fund and then checks if their index in the
+    /// funders array is correct.
     function test_FunderAddedToFundersArray() public {
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
         assertEq(fundMe.getFunderIndex(user1), 0);
     }
 
+    /// @notice Ensures that no duplicate funders are added to the funders array.
+    /// @dev Starts a prank running as a user, calls the fund function twice,
+    /// and checks for duplicates in the funders array.
     function test_NoDuplicateFundersInFundersArray() public {
         vm.startPrank(user1);
         fundMe.fund{value: SEND_VALUE}();
@@ -91,6 +111,10 @@ contract FundMeFundTest is FundMeTestSetup {
         }
     }
 
+    /// @notice Verifies that the first funder's address in the funders array
+    /// matches the provided address.
+    /// @dev Pranks a user to fund and then checks if their address matches
+    /// the zero index of the funders array.
     function test_FunderAddressMatchesZeroIndexOfFundersArray() public {
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
@@ -102,16 +126,30 @@ contract FundMeFundTest is FundMeTestSetup {
 // WITHDRAWAL TESTS
 // *****************
 contract FundMeWithdrawTest is FundMeTestSetup {
+    /// @notice Tests that the contract owner can withdraw funds once.
+    /// @dev Funds the contract, then performs a withdrawal by the owner,
+    /// and checks if the contract balance is zero after withdrawal.
     function test_OwnerWithdrawOnce() public {
+        uint256 gasStart = gasleft();
+        vm.txGasPrice(GAS_PRICE);
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
 
         vm.prank(fundMe.owner());
         fundMe.withdraw();
 
+        uint256 gasEnd = gasleft();
+        uint256 gasUsed = (gasStart - gasEnd) * GAS_PRICE;
+        console.log("Gas used: ", gasUsed);
+
         assertEq(fundMe.getBalance(), 0);
     }
 
+    /// @notice Tests that the contract owner can perform multiple withdrawals.
+    /// As the contract balance is zero after the first withdrawal, a second
+    /// funding is required to test multiple withdrawals.
+    /// @dev Funds the contract, withdraws, funds again, and withdraws again,
+    /// finally checking if the contract balance is zero.
     function test_OwnerWithdrawMultiple() public {
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
@@ -127,6 +165,8 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         assertEq(fundMe.getBalance(), 0);
     }
 
+    /// @notice Ensures that only the contract owner can perform withdrawals.
+    /// @dev Expects a revert when a non-owner tries to withdraw funds.
     function test_OnlyOwnerCanWithdraw() public {
         fundMe.fund{value: SEND_VALUE}();
         vm.expectRevert("Ownable: caller is not the owner");
@@ -134,12 +174,16 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         fundMe.withdraw();
     }
 
+    /// @notice Tests that withdrawal fails when the contract balance is zero.
+    /// @dev Expects a revert when attempting to withdraw with zero contract balance.
     function test_WithdrawFailsZeroBalance() public {
         vm.expectRevert(FundMe__WithdrawNoFunds.selector);
         vm.prank(owner);
         fundMe.withdraw();
     }
 
+    /// @notice Tests withdrawal failure in case of a call failure.
+    /// @dev Simulates a call failure during withdrawal and expects a revert.
     function test_WithdrawCallFailureThrowsError() public {
         // This covers the edge case where the .call fails
         // because the receiving contract doesn't have a
@@ -169,6 +213,9 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         assertEq(testHelper.fundMeGetFunderAddress(0), address(this));
     }
 
+    /// @notice Tests withdrawal of ETH from multiple funders.
+    /// @dev Funds the contract from multiple addresses, withdraws, and then
+    /// checks if the contract balance and funders are reset correctly.
     function test_WithdrawEthFromMultipleFunders() public {
         // Fund the contract
         address[] memory users = new address[](3);
@@ -202,6 +249,9 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         }
     }
 
+    /// @notice Tests withdrawal of self-destruct sent funds.
+    /// @dev Simulates a self-destruct attack, then attempts withdrawal of
+    /// these funds, checking for correct handling and owner restrictions.
     function test_WithdrawSelfdestructAttackFunds() public {
         // Fund the contract
         fundMe.fund{value: SEND_VALUE}();
@@ -235,14 +285,15 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         assertEq(fundMe.getBalance(), address(fundMe).balance);
     }
 
+    /// @notice Tests withdrawal failure in case of a call failure after a
+    /// self-destruct attack.
+    /// @dev Simulates a call failure during withdrawal after a self-destruct attack
+    /// and expects a revert. Covers an edge case where the .call fails because
+    /// the receiving contract doesn't have a // receive() or fallback() function.
+    /// Very unlikely on the withdrawal function as only the owner can call it
+    /// and it withdraws all funds anyway but it covers this test branch
+    /// and is needed for the refund test.
     function test_SelfDestructWithdrawCallFailureThrowsError() public {
-        // This covers the edge case where the .call fails
-        // because the receiving contract doesn't have a
-        // receive() or fallback() function
-        // Very unlikely on the withdrawal function as only the
-        // owner can call it and it withdraws all funds anyway
-        // but it covers this test branch and is needed for the refund test
-
         // Deploy the helper contract
         SelfDestructHelper selfDestructHelper = new SelfDestructHelper(
             address(fundMe)
@@ -269,6 +320,9 @@ contract FundMeWithdrawTest is FundMeTestSetup {
 // REFUND TESTS
 // *************
 contract FundMeWRefundTest is FundMeTestSetup {
+    /// @notice Tests that the refund function succeeds under normal conditions.
+    /// @dev Funds the contract with multiple users, then refunds each user and
+    /// checks if balances and funders' data are correctly updated.
     function test_RefundSucceeds() public {
         // User1 - Funds with no refund
         vm.prank(user1);
@@ -314,30 +368,35 @@ contract FundMeWRefundTest is FundMeTestSetup {
         assertEq(fundMe.getBalance(), SEND_VALUE);
     }
 
+    /// @notice Tests that refunding fails when the contract has a zero balance.
+    /// @dev Attempts a refund with a user who has not funded, expecting a
+    /// revert due to no funds to refund.
     function test_RefundZeroBalanceFails() public {
         vm.expectRevert(FundMe__RefundNoFunds.selector);
         vm.prank(user1);
         fundMe.refund();
     }
 
+    /// @notice Tests refund failure when invoked by a non-funder.
+    /// @dev Funds the contract from some addresses, then attempts a refund
+    /// from an address that did not fund, expecting a revert.
     function test_RefundWithNonFunder() public {
-        // Step 1: Fund the contract from multiple addresses
+        // Fund the contract from multiple addresses
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
         vm.prank(user2);
         fundMe.fund{value: SEND_VALUE}();
 
-        // Step 2: Attempt to invoke the refund function from an address that didn't fund
+        // Attempt to invoke the refund function from an address that didn't fund
         vm.prank(user3);
         vm.expectRevert(FundMe__RefundNoFunds.selector);
         fundMe.refund();
     }
 
+    /// @notice Tests that a refund call failure triggers an error.
+    /// @dev Simulates an edge case scenario where the refund call fails
+    /// due to lack of a receive() or fallback() function, expecting a revert.
     function test_RefundCallFailureThrowsError() public {
-        // This covers the edge case where the .call fails
-        // because the receiving contract doesn't have a
-        // receive() or fallback() function
-
         // Deploy the helper contract
         TestHelper testHelper = new TestHelper(address(fundMe));
 
@@ -358,18 +417,21 @@ contract FundMeWRefundTest is FundMeTestSetup {
         testHelper.fundMeRefund();
     }
 
+    /// @notice Tests the refund function's resilience to reentrancy attacks.
+    /// @dev Attempts a reentrancy attack on the refund function and expects
+    /// a revert, confirming security against such attacks.
     function test_RefundFunctionBlocksReentrancyAttack() public {
         // Deploy the ReentrancyAttack contract
         ReentrancyAttack reentrancyAttack = new ReentrancyAttack(
             payable(address(fundMe))
         );
 
-        // Fund the contract
-        // Deposit multiple accounts to confirm that isn't refunded in the attack
+        // Fund the contract from a user that will be different to the attacker
+        // to show that only the attackers funds are returned
         vm.prank(user1);
         fundMe.fund{value: SEND_VALUE}();
 
-        // Refund from the contract
+        // Attack the contract with the ReentrancyAttack contract
         vm.expectRevert(FundMe__RefundFailed.selector);
         reentrancyAttack.attack{value: SEND_VALUE}();
     }

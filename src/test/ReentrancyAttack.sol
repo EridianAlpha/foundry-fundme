@@ -5,6 +5,7 @@ import "../FundMe.sol";
 
 /**
  * This contract implements a reentrancy attack on the fundMe.refund() function.
+ * It initially funds the contract so that it can then attempt a refund.
  * It will attempt to call refund() multiple times to drain the contract.
  * This particular attack does not work as the s_addressToAmountFunded mapping
  * is reset to 0 in fundMe.refund() before the value is sent.
