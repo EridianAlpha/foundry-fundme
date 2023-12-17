@@ -25,7 +25,8 @@ contract FundMe is Ownable, ReentrancyGuard {
     // State variables
     address[] private s_funders;
     address private immutable i_creator; // Set in constructor
-    mapping(address => uint256) private s_addressToAmountFunded;
+    mapping(address funderAddress => uint256 amountFunded)
+        private s_addressToAmountFunded;
     uint256 public constant MINIMUM_ETH = 1 * 10 ** 15; // Constant, never changes (0.001 ETH)
     uint256 private s_balance; // Stores the funded balance to avoid selfdestruct attacks using address(this).balance
     AggregatorV3Interface private s_priceFeed;
