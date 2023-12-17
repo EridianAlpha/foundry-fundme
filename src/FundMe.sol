@@ -19,7 +19,6 @@ error FundMe__WithdrawSelfDestructFailed();
 /** @title FundMe
  *  @author EridianAlpha
  *  @notice A template contract for funding and withdrawals.
- *  @dev // TODO
  */
 contract FundMe is Ownable, ReentrancyGuard {
     // State variables
@@ -83,7 +82,10 @@ contract FundMe is Ownable, ReentrancyGuard {
     }
 
     /** @notice Function for sending funds to the contract.
-     *  @dev // TODO
+     *  @dev This function checks if the sent amount is above a defined minimum threshold, `MINIMUM_ETH`.
+     *  If the amount is sufficient, it updates the contract's balance and the mapping of the
+     *  sender's address to the amount funded. Additionally, it checks if the sender is a new funder
+     *  and, if so, adds them to the `s_funders` array.
      */
     function fund() public payable {
         if (msg.value < MINIMUM_ETH) revert FundMe__NotEnoughEthSent();
