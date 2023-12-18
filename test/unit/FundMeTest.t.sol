@@ -2,12 +2,12 @@
 pragma solidity ^0.8.18;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FundMe} from "../src/FundMe.sol";
-import {DeployFundMe} from "../script/DeployFundMe.s.sol";
-import {TestHelper} from "../src/test/TestHelper.sol";
-import {SelfDestructAttack} from "../src/test/SelfDestructAttack.sol";
-import {SelfDestructHelper} from "../src/test/SelfDestructHelper.sol";
-import {ReentrancyAttack} from "../src/test/ReentrancyAttack.sol";
+import {FundMe} from "../../src/FundMe.sol";
+import {DeployFundMe} from "../../script/DeployFundMe.s.sol";
+import {TestHelper} from "../../src/test/TestHelper.sol";
+import {SelfDestructAttack} from "../../src/test/SelfDestructAttack.sol";
+import {SelfDestructHelper} from "../../src/test/SelfDestructHelper.sol";
+import {ReentrancyAttack} from "../../src/test/ReentrancyAttack.sol";
 
 error FundMe__RefundFailed();
 error FundMe__RefundNoFunds();
@@ -17,7 +17,9 @@ error FundMe__WithdrawNoFunds();
 error FundMe__NotEnoughEthSent();
 error FundMe__WithdrawSelfDestructFailed();
 
-// Base contract for common setup
+// ================================================================
+// │                 COMMON SETUP AND CONSTRUCTOR                 │
+// ================================================================
 contract FundMeTestSetup is Test {
     FundMe fundMe;
     uint256 constant GAS_PRICE = 1;
@@ -46,9 +48,9 @@ contract FundMeConstructorTest is FundMeTestSetup {
     }
 }
 
-// **************
-// FUNDING TESTS
-// **************
+// ================================================================
+// │                        FUNDING TESTS                         │
+// ================================================================
 contract FundMeFundTest is FundMeTestSetup {
     /// Tests that the `fund` function reverts when no ETH is sent with the transaction.
     /// Expects a revert with the `FundMe__NotEnoughEthSent` error selector.
@@ -122,9 +124,9 @@ contract FundMeFundTest is FundMeTestSetup {
     }
 }
 
-// *****************
-// WITHDRAWAL TESTS
-// *****************
+// ================================================================
+// │                      WITHDRAWAL TESTS                        │
+// ================================================================
 contract FundMeWithdrawTest is FundMeTestSetup {
     /// @notice Tests that the contract owner can withdraw funds once.
     /// @dev Funds the contract, then performs a withdrawal by the owner,
@@ -316,9 +318,9 @@ contract FundMeWithdrawTest is FundMeTestSetup {
     }
 }
 
-// *************
-// REFUND TESTS
-// *************
+// ================================================================
+// │                         REFUND TESTS                         │
+// ================================================================
 contract FundMeWRefundTest is FundMeTestSetup {
     /// @notice Tests that the refund function succeeds under normal conditions.
     /// @dev Funds the contract with multiple users, then refunds each user and
@@ -437,7 +439,9 @@ contract FundMeWRefundTest is FundMeTestSetup {
     }
 }
 
-// Test all the getter functions
+// ================================================================
+// │                        GETTERS TESTS                         │
+// ================================================================
 contract FundMeGettersTest is FundMeTestSetup {
     function test_GetCreator() public {
         assertEq(fundMe.getCreator(), owner);
@@ -485,6 +489,9 @@ contract FundMeGettersTest is FundMeTestSetup {
     }
 }
 
+// ================================================================
+// │                          MISC TESTS                          │
+// ================================================================
 contract FundMeMiscTest is FundMeTestSetup {
     function test_MinimumEthAmount() public {
         assertEq(fundMe.MINIMUM_ETH(), 0.001 ether);
