@@ -5,53 +5,45 @@ import {Script, console} from "forge-std/Script.sol";
 import {DevOpsTools} from "@foundry-devops/src/DevOpsTools.sol";
 import {FundMe} from "src/FundMe.sol";
 
-contract FundFundMe is Script {
-    uint256 SEND_VALUE = 0.1 ether;
+contract Setup is Script {
+    address public fundMeAddress;
 
-    function fundFundMe(address fundMeAddress) public {
-        console.log("Funding FundMe with %s", SEND_VALUE);
-
-        vm.startBroadcast();
-        FundMe(payable(fundMeAddress)).fund{value: SEND_VALUE}();
-        vm.stopBroadcast();
-
-        console.log(
-            "FundMe balance after funding %s",
-            address(fundMeAddress).balance
-        );
+    constructor() {
+        fundMeAddress = getFundMeAddress();
     }
 
-    function run() external {
-        address fundMeAddress = DevOpsTools.get_most_recent_deployment(
+    function getFundMeAddress() internal view returns (address) {
+        address _fundMeAddress = DevOpsTools.get_most_recent_deployment(
             "FundMe",
             block.chainid
         );
+        require(_fundMeAddress != address(0), "FundMe address is invalid");
+        return _fundMeAddress;
+    }
+}
+
+contract FundFundMe is Script, Setup {
+    uint256 SEND_VALUE = 0.1 ether;
+
+    function fundFundMe(address fundMeAddress) public {
+        vm.startBroadcast();
+        FundMe(payable(fundMeAddress)).fund{value: SEND_VALUE}();
+        vm.stopBroadcast();
+    }
+
+    function run() public {
         fundFundMe(fundMeAddress);
     }
 }
 
-contract WithdrawFundMe is Script {
+contract WithdrawFundMe is Script, Setup {
     function withdrawFundMe(address fundMeAddress) public {
-        console.log(
-            "FundMe balance before withdraw %s",
-            address(fundMeAddress).balance
-        );
-
         vm.startBroadcast();
         FundMe(payable(fundMeAddress)).withdraw();
         vm.stopBroadcast();
-
-        console.log(
-            "FundMe balance after withdraw %s",
-            address(fundMeAddress).balance
-        );
     }
 
-    function run() external {
-        address fundMeAddress = DevOpsTools.get_most_recent_deployment(
-            "FundMe",
-            block.chainid
-        );
+    function run() public {
         withdrawFundMe(fundMeAddress);
     }
 }
