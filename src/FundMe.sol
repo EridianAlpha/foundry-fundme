@@ -21,7 +21,9 @@ error FundMe__WithdrawSelfDestructFailed();
  *  @notice A template contract for funding and withdrawals.
  */
 contract FundMe is Ownable, ReentrancyGuard {
-    // State variables
+    // ================================================================
+    // │                        STATE VARIABLES                       │
+    // ================================================================
     address[] private s_funders;
     address private immutable i_creator; // Set in constructor
     mapping(address funderAddress => uint256 amountFunded)
@@ -81,6 +83,9 @@ contract FundMe is Ownable, ReentrancyGuard {
         fund();
     }
 
+    // ================================================================
+    // │                        FUND FUNCTIONS                        │
+    // ================================================================
     /** @notice Function for sending funds to the contract.
      *  @dev This function checks if the sent amount is above a defined minimum threshold, `MINIMUM_ETH`.
      *  If the amount is sufficient, it updates the contract's balance and the mapping of the
@@ -103,6 +108,9 @@ contract FundMe is Ownable, ReentrancyGuard {
         s_funders.push(msg.sender);
     }
 
+    // ================================================================
+    // │                      WITHDRAW FUNCTIONS                      │
+    // ================================================================
     /** @notice Function for allowing owner to withdraw all funds from the contract.
      *  @dev Does not require a reentrancy check as only the owner can call it and it withdraws all funds anyway.
      */
@@ -157,6 +165,9 @@ contract FundMe is Ownable, ReentrancyGuard {
         }
     }
 
+    // ================================================================
+    // │                       REFUND FUNCTIONS                       │
+    // ================================================================
     /** @notice Function for refunding deposits to funders on request.
      *  @dev Does not require nonReentrant modifier as s_addressToAmountFunded
      *  is reset before sending funds, but retained here for completeness of this template.
@@ -193,6 +204,9 @@ contract FundMe is Ownable, ReentrancyGuard {
         if (!callSuccess) revert FundMe__RefundFailed();
     }
 
+    // ================================================================
+    // │                       GETTER FUNCTIONS                       │
+    // ================================================================
     /** @notice Getter function to get the i_creator address.
      *  @dev Public function to allow anyone to view the contract creator.
      *  @return address of the creator.
