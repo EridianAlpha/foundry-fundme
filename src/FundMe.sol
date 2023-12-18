@@ -106,7 +106,7 @@ contract FundMe is Ownable, ReentrancyGuard {
     /** @notice Function for allowing owner to withdraw all funds from the contract.
      *  @dev Does not require a reentrancy check as only the owner can call it and it withdraws all funds anyway.
      */
-    function withdraw() external payable onlyOwner {
+    function withdraw() external onlyOwner {
         // Check to make sure that the contract is not empty before attempting withdrawal
         if (s_balance == 0) revert FundMe__WithdrawNoFunds();
 
@@ -143,7 +143,7 @@ contract FundMe is Ownable, ReentrancyGuard {
     /** @notice Function for allowing owner to withdraw any selfdestruct funds from the contract.
      *  @dev // TODO
      */
-    function withdrawSelfdestructFunds() external payable onlyOwner {
+    function withdrawSelfdestructFunds() external onlyOwner {
         if (address(this).balance > s_balance) {
             uint256 selfdestructBalance = address(this).balance - s_balance;
 
@@ -161,7 +161,7 @@ contract FundMe is Ownable, ReentrancyGuard {
      *  @dev Does not require nonReentrant modifier as s_addressToAmountFunded
      *  is reset before sending funds, but retained here for completeness of this template.
      */
-    function refund() external payable nonReentrant {
+    function refund() external nonReentrant {
         uint256 refundAmount = s_addressToAmountFunded[msg.sender];
         if (refundAmount == 0) revert FundMe__RefundNoFunds();
 
