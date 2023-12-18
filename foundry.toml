@@ -2,9 +2,8 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-ffi = true # Allow foundry to run commands on the command line
+fs_permissions = [{ access = "read", path = "./broadcast" }] # Allow foundry to run commands on the command line
 remappings = [
     "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/", 
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "@foundry-devops/=lib/foundry-devops/"
-    ]
+    "@foundry-devops/=lib/foundry-devops/"]
