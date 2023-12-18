@@ -15,6 +15,18 @@ Foundry consists of:
 
 ## Usage
 
+### Makefile
+
+• Use the Makefile to run common commands
+
+```shell
+make help
+make anvil
+make deploy
+make fund
+make withdraw
+```
+
 ### Build
 
 ```shell
