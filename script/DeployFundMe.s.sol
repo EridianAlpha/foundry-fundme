@@ -7,17 +7,19 @@ import {FundMe} from "../src/FundMe.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
 contract DeployFundMe is Script {
-    function run(address owner) external returns (FundMe) {
-        // Before startBroadcast -> Not a "real" tx
+    // Overload the run function to allow owner address to be optional
+    function run() public returns (FundMe) {
+        return run(msg.sender);
+    }
+
+    function run(address owner) public returns (FundMe) {
         HelperConfig helperConfig = new HelperConfig();
         address priceFeed = helperConfig.activeNetworkConfig();
 
-        // After startBroadcast -> "Real" tx
-        // Specify the user deploying the contract as the initial owner
-        vm.startBroadcast(owner);
+        vm.startBroadcast();
         FundMe fundMe = new FundMe(owner, priceFeed);
-
         vm.stopBroadcast();
+
         return fundMe;
     }
 }
