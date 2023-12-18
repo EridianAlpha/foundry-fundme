@@ -44,7 +44,7 @@ contract FundMeTestSetup is Test {
 
 contract FundMeConstructorTest is FundMeTestSetup {
     function test_Constructor() public {
-        assertEq(fundMe.getCreator(), owner);
+        assertEq(fundMe.getCreator(), msg.sender);
     }
 }
 
@@ -444,7 +444,7 @@ contract FundMeWRefundTest is FundMeTestSetup {
 // ================================================================
 contract FundMeGettersTest is FundMeTestSetup {
     function test_GetCreator() public {
-        assertEq(fundMe.getCreator(), owner);
+        assertEq(fundMe.getCreator(), msg.sender);
     }
 
     function test_GetOwner() public {
