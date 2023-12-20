@@ -9,14 +9,6 @@ import {SelfDestructAttack} from "../../src/test/SelfDestructAttack.sol";
 import {SelfDestructHelper} from "../../src/test/SelfDestructHelper.sol";
 import {ReentrancyAttack} from "../../src/test/ReentrancyAttack.sol";
 
-error FundMe__RefundFailed();
-error FundMe__RefundNoFunds();
-error FundMe__IndexNotFound();
-error FundMe__WithdrawFailed();
-error FundMe__WithdrawNoFunds();
-error FundMe__NotEnoughEthSent();
-error FundMe__WithdrawSelfDestructFailed();
-
 // ================================================================
 // │                 COMMON SETUP AND CONSTRUCTOR                 │
 // ================================================================
@@ -55,7 +47,7 @@ contract FundMeFundTest is FundMeTestSetup {
     /// Tests that the `fund` function reverts when no ETH is sent with the transaction.
     /// Expects a revert with the `FundMe__NotEnoughEthSent` error selector.
     function test_FundFailsNoEthSent() public {
-        vm.expectRevert(FundMe__NotEnoughEthSent.selector);
+        vm.expectRevert(FundMe.FundMe__NotEnoughEthSent.selector);
         fundMe.fund();
     }
 
@@ -65,7 +57,7 @@ contract FundMeFundTest is FundMeTestSetup {
     /// then expects a revert with the `FundMe__NotEnoughEthSent` error selector.
     function test_FundFailsNotEnoughEthSent() public {
         uint256 MINIMUM_ETH_LESS = fundMe.MINIMUM_ETH() - 1;
-        vm.expectRevert(FundMe__NotEnoughEthSent.selector);
+        vm.expectRevert(FundMe.FundMe__NotEnoughEthSent.selector);
         fundMe.fund{value: (MINIMUM_ETH_LESS)}();
     }
 
@@ -179,7 +171,7 @@ contract FundMeWithdrawTest is FundMeTestSetup {
     /// @notice Tests that withdrawal fails when the contract balance is zero.
     /// @dev Expects a revert when attempting to withdraw with zero contract balance.
     function test_WithdrawFailsZeroBalance() public {
-        vm.expectRevert(FundMe__WithdrawNoFunds.selector);
+        vm.expectRevert(FundMe.FundMe__WithdrawNoFunds.selector);
         vm.prank(owner);
         fundMe.withdraw();
     }
@@ -206,7 +198,7 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         fundMe.transferOwnership(address(testHelper));
 
         // Withdraw from the contract
-        vm.expectRevert(FundMe__WithdrawFailed.selector);
+        vm.expectRevert(FundMe.FundMe__WithdrawFailed.selector);
         testHelper.fundMeWithdraw();
 
         // If the withdraw fails, the s_funders address array should not be reset
@@ -259,7 +251,7 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         fundMe.fund{value: SEND_VALUE}();
 
         // Check funds can't be withdrawn before the attack
-        vm.expectRevert(FundMe__WithdrawSelfDestructFailed.selector);
+        vm.expectRevert(FundMe.FundMe__WithdrawSelfDestructFailed.selector);
         vm.prank(owner);
         fundMe.withdrawSelfdestructFunds();
 
@@ -313,7 +305,7 @@ contract FundMeWithdrawTest is FundMeTestSetup {
         selfDestructHelper.fundMeTransferOwnership();
 
         // Withdraw from the contract
-        vm.expectRevert(FundMe__WithdrawSelfDestructFailed.selector);
+        vm.expectRevert(FundMe.FundMe__WithdrawSelfDestructFailed.selector);
         selfDestructHelper.fundMeSelfDestructWithdraw();
     }
 }
@@ -361,9 +353,9 @@ contract FundMeWRefundTest is FundMeTestSetup {
         assertEq(fundMe.getAddressToAmountFunded(user3), 0);
 
         // Check funder has been removed from the s_funders index
-        vm.expectRevert(FundMe__IndexNotFound.selector);
+        vm.expectRevert(FundMe.FundMe__IndexNotFound.selector);
         fundMe.getFunderIndex(user2);
-        vm.expectRevert(FundMe__IndexNotFound.selector);
+        vm.expectRevert(FundMe.FundMe__IndexNotFound.selector);
         fundMe.getFunderIndex(user3);
 
         // Check s_balance is correct (Only contains user1 funds)
@@ -374,7 +366,7 @@ contract FundMeWRefundTest is FundMeTestSetup {
     /// @dev Attempts a refund with a user who has not funded, expecting a
     /// revert due to no funds to refund.
     function test_RefundZeroBalanceFails() public {
-        vm.expectRevert(FundMe__RefundNoFunds.selector);
+        vm.expectRevert(FundMe.FundMe__RefundNoFunds.selector);
         vm.prank(user1);
         fundMe.refund();
     }
@@ -391,7 +383,7 @@ contract FundMeWRefundTest is FundMeTestSetup {
 
         // Attempt to invoke the refund function from an address that didn't fund
         vm.prank(user3);
-        vm.expectRevert(FundMe__RefundNoFunds.selector);
+        vm.expectRevert(FundMe.FundMe__RefundNoFunds.selector);
         fundMe.refund();
     }
 
@@ -415,7 +407,7 @@ contract FundMeWRefundTest is FundMeTestSetup {
         fundMe.transferOwnership(address(testHelper));
 
         // Refund from the contract
-        vm.expectRevert(FundMe__RefundFailed.selector);
+        vm.expectRevert(FundMe.FundMe__RefundFailed.selector);
         testHelper.fundMeRefund();
     }
 
@@ -434,7 +426,7 @@ contract FundMeWRefundTest is FundMeTestSetup {
         fundMe.fund{value: SEND_VALUE}();
 
         // Attack the contract with the ReentrancyAttack contract
-        vm.expectRevert(FundMe__RefundFailed.selector);
+        vm.expectRevert(FundMe.FundMe__RefundFailed.selector);
         reentrancyAttack.attack{value: SEND_VALUE}();
     }
 }

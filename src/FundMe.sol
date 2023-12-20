@@ -7,20 +7,20 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {PriceConverter} from "./PriceConverter.sol";
 
-// Error codes
-error FundMe__RefundFailed();
-error FundMe__RefundNoFunds();
-error FundMe__IndexNotFound();
-error FundMe__WithdrawFailed();
-error FundMe__WithdrawNoFunds();
-error FundMe__NotEnoughEthSent();
-error FundMe__WithdrawSelfDestructFailed();
-
 /** @title FundMe
  *  @author EridianAlpha
  *  @notice A template contract for funding and withdrawals.
  */
 contract FundMe is Ownable, ReentrancyGuard {
+    // Error codes
+    error FundMe__RefundFailed();
+    error FundMe__RefundNoFunds();
+    error FundMe__IndexNotFound();
+    error FundMe__WithdrawFailed();
+    error FundMe__WithdrawNoFunds();
+    error FundMe__NotEnoughEthSent();
+    error FundMe__WithdrawSelfDestructFailed();
+
     // ================================================================
     // │                        STATE VARIABLES                       │
     // ================================================================
